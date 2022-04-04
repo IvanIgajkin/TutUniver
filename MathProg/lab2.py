@@ -34,16 +34,9 @@ def set_yi_in_y_array(yi, i, k):
     else:
         y[i] = yi
 
-def update_d_array():
-        for i in range(dim - 1):
-            d_array[i] = d_array[i + 1]
-
-        #массивы в Pyhton хранятся в виде столбцов, что требуется учесть для дальнейших расчётов
-        d_array = d_array.transpose()
-
 #начальное приближение
 #x0 = np.array([0.5, 1.0])
-x0 = np.array([8.0, 9.0]) 
+x0 = np.array([8.0, 9.0])
 eps1, eps2 = 0.1, 0.15 #задаваемая точность
 M = 10 #предельное число итераций
 
@@ -52,15 +45,18 @@ xk = x0 #задаём xk, как начальное приближение
 y = [x0]
 
 while k < M:
+    print('Iteration: {0}\tCurrent x = (x1={1}, x2={2})'.format(k + 1, xk[0], xk[1]))
+    
     is_founded = False
     i = 0
+    
     while i <= dim:
         di = get_di(i)
         ti = find_tk(y[i], di)
         set_yi_in_y_array(y[i] + ti * di, i, k) #находим y[i + 1]
         if i == dim - 2: #i = n - 1
-            if np.all(y[dim - 1] == y[0]):
-                xk = y[dim - 1]
+            if np.all(y[len(y) - 1] == y[0]):
+                xk = y[len(y) - 1]
                 is_founded = True
                 break
             else:
@@ -74,6 +70,7 @@ while k < M:
                 i = i + 1
         else:
             i = i + 1
+    #конец внутреннего цикла
 
     xk_new = np.array(y[-1])
     if np.linalg.norm(xk_new - xk) < eps1: #проверка на сходимость
@@ -81,11 +78,17 @@ while k < M:
 
     xk = xk_new
 
+    #строим новые направления
+    d_new_array = d_array
     tmp_diff = y[-1] - y[1]
     for i in range(dim):
-        d_array[i, dim - 1] = tmp_diff[i]
-    
-    d0 = d_array[dim - 1]
+        d_new_array[i, dim - 1] = tmp_diff[i]
+
+    if np.linalg.matrix_rank(d_new_array) == dim: #проверка на линейную независимость
+        d0 = d_new_array[dim - 1]
+        d_array = d_new_array
+    else:
+        d0 = d_array[dim - 1]
 
     y[0] = xk
 
@@ -95,4 +98,6 @@ while k < M:
 # заменить все значения, примерно равные нулю на 0.0
 xk = list(map(lambda xi: 0.0 if xi < ZERO else xi, xk))
 
-print(xk)
+print()
+print('Found local minimum on iterarion {0}'.format(k + 1))
+print('Local minimum for the function is (x1={0}, x2={1})'.format(xk[0], xk[1]))

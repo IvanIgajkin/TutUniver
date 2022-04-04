@@ -4,7 +4,7 @@ from scipy.optimize import fmin
 
 #задаём функцию
 #f = lambda x_vec: 2 * x_vec[0]**2 + x_vec[0] * x_vec[1] + x_vec[1]**2
-f = lambda x_vec: 4 * (x_vec[0] - 5)**2 + (x_vec[1] - 6)**2
+f = lambda x_vec: 4 * (x_vec[0] - 4)**2 + (x_vec[1] - 3)**2
 
 ZERO = 1e-4 #"условный ноль" для использования при сравнении вещественных чисел  с нулем
 
@@ -27,6 +27,8 @@ k = 0
 xk = x0 #задаём xk, как начальное приближение
 
 while k < M:
+    print('Iteration: {0}\tCurrent x = (x1={1}, x2={2})'.format(k + 1, xk[0], xk[1]))
+
     grad_value = nd.Gradient(f)(xk) #значение градиента для xk
     if np.linalg.norm(grad_value) <= eps1: #проверка на норму градиента функции для xk
         break
@@ -51,4 +53,6 @@ while k < M:
 # заменить все значения, примерно равные нулю на 0.0
 xk = list(map(lambda xi: 0.0 if xi < ZERO else xi, xk))
 
-print(xk)
+print()
+print('Found local minimum on iterarion {0}'.format(k + 1))
+print('Local minimum for the function is (x1={0}, x2={1})'.format(xk[0], xk[1]))

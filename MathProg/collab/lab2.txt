@@ -55,8 +55,11 @@ xk = x0 #задаём xk, как начальное приближение
 y = [x0]
 
 while k < M:
+    print('Iteration: {0}\tCurrent x = (x1={1}, x2={2})'.format(k + 1, xk[0], xk[1]))
+    
     is_founded = False
     i = 0
+    
     while i <= dim:
         di = get_di(i)
         ti = find_tk(y[i], di)
@@ -98,4 +101,6 @@ while k < M:
 # заменить все значения, примерно равные нулю на 0.0
 xk = list(map(lambda xi: 0.0 if xi < ZERO else xi, xk))
 
-print(xk)
+print()
+print('Found local minimum on iterarion {0}'.format(k + 1))
+print('Local minimum for the function is (x1={0}, x2={1})'.format(xk[0], xk[1]))
