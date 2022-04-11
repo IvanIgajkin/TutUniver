@@ -19,21 +19,21 @@ while True:
         minSize=utls.IMG_SHAPE
     )
 
-    if cv2.waitKey(1) == ord('q'):
-        break
-
-    if cv2.waitKey(13) == 13:
-        for (x, y, w, h) in faces:
-            screenshot = frame[x:x+w, y:y+h].copy()
-            #cv2.imshow('Screenshot', screenshot)
-            utls.recognise(screenshot)
-            break
-
     for (x, y, w, h) in faces:
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
     # Display the resulting frame
     cv2.imshow('Video', frame)
+
+    if cv2.waitKey(1) == ord('q'):
+        break
+
+    if cv2.waitKey(1) == 13:
+        for (x, y, w, h) in faces:
+            screenshot = frame[x:x+w, y:y+h].copy()
+            cv2.imshow('Screenshot', screenshot)
+            #utls.recognise(screenshot)
+            break
 
 video_capture.release()
 cv2.destroyAllWindows()

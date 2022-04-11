@@ -33,9 +33,9 @@ def data_exists():
         exists(get_fpath(MIDDLE_FILE))
 
 
-def person_func(k):
-    vectors = np.loadtxt(get_fpath(VECTORS_FILE), delimiter=';')
-    return vectors[5*k:5*k+5]
+def person_func(k, vectors):
+    tmp = vectors[5*k:5*k+5]
+    return np.array([np.mean(col, axis=-1, dtype=D_TYPE) for col in tmp.transpose()])
 
 
 def get_original_data():
@@ -79,6 +79,7 @@ def get_original_data():
         new_vectors = vectors.dot(basis)
 
         np.savetxt(get_fpath(BASIS_FILE), basis, delimiter=';')
+        np.savetxt(get_fpath(VECTORS_FILE), new_vectors, delimiter=';')
         np.savetxt(get_fpath(MIDDLE_FILE), mid_image_data, delimiter=';')
 
         return (basis, mid_image_data)
@@ -86,7 +87,7 @@ def get_original_data():
     def get_data(fname):
         return np.loadtxt(get_fpath(fname), delimiter=';')
 
-    return (get_data(BASIS_FILE), get_data(MIDDLE_FILE))
+    return (get_data(BASIS_FILE), get_data(VECTORS_FILE), get_data(MIDDLE_FILE))
 
 
 persons = {1: 'Oleg', 2: 'Dima', 3: 'Ivan', 4: 'Michel', 5: 'Alexandr', 6: 'Alina', 7: 'Olesya', 8: 'Vova'}
@@ -94,11 +95,12 @@ persons = {1: 'Oleg', 2: 'Dima', 3: 'Ivan', 4: 'Michel', 5: 'Alexandr', 6: 'Alin
 
 def recognise(face_data):
     img = im.fromarray(face_data)
+
     image_data = np.array(np.mean( \
             (np.asarray(img.resize(IMG_SHAPE), dtype=D_TYPE)) / 255.0, \
             axis=-1, dtype=D_TYPE).flatten())
 
-    basis, mid_image_data = get_original_data()
+    basis, vectors, mid_image_data = get_original_data()
 
     #exclude middle image data
     clean_data = np.array([np.abs(fi - mid_image_data)
@@ -106,10 +108,11 @@ def recognise(face_data):
 
     print('Recognition in progress...')
 
-    transformed_data = clean_data.dot(basis)
-    ro = []
-    for k in range(N // 5):
-        tmp = np.array([td - person_func(k) for td in transformed_data])
-        ro.append(np.linalg.norm(np.sqrt(tmp.dot(tmp))))
+    transformed_data = clean_data.transpose().dot(basis)
+    for Li in transformed_data:
+        ro = []
+        for k in range(N // 5):
+            tmp = np.array(Li - person_func(k, vectors))
+            ro.append(np.linalg.norm(np.sqrt(tmp.dot(tmp))))
 
-    print(persons(np.argmin(ro)))
+        print(persons[np.argmin(ro)])
