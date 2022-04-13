@@ -16,11 +16,12 @@ while True:
         gray,
         scaleFactor=1.1,
         minNeighbors=1,
-        minSize=utls.IMG_SHAPE
+        minSize=(100, 75)
     )
 
     for (x, y, w, h) in faces:
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        break
 
     # Display the resulting frame
     cv2.imshow('Video', frame)
@@ -30,10 +31,10 @@ while True:
 
     if cv2.waitKey(1) == 13:
         for (x, y, w, h) in faces:
-            screenshot = frame[x:x+w, y:y+h].copy()
+            screenshot = frame[y+1:y+1+h, x+1:x+1+w].copy()
+            print('Screenshot was captured')
             cv2.imshow('Screenshot', screenshot)
-            #utls.recognise(screenshot)
-            break
+            utls.recognise(screenshot)
 
 video_capture.release()
 cv2.destroyAllWindows()

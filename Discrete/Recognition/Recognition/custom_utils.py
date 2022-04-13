@@ -12,10 +12,13 @@ D_TYPE = np.float32
 BASIS_FILE = 'basis.txt'
 VECTORS_FILE = 'original_vectors.txt'
 MIDDLE_FILE = 'middle_image.txt'
+WEIGHTS_FILE = 'weights.txt'
 
 ACC = 0.9
-IMG_SHAPE = (64, 64)
+IMG_SHAPE = (400, 300)
 #Global parameters
+
+persons = {0: 'Oleg', 1: 'Dima', 2: 'Ivan', 3: 'Michel', 4: 'Alexandr', 5: 'Alina', 6: 'Olesya', 7: 'Vova'}
 
 
 def print_img(data):
@@ -27,10 +30,16 @@ def get_fpath(fname):
     return '{0}/{1}'.format(DATA_DIR, fname)
 
 
-def data_exists():
-    return exists(get_fpath(BASIS_FILE)) and \
-        exists(get_fpath(VECTORS_FILE)) and \
-        exists(get_fpath(MIDDLE_FILE))
+def get_fdata(fname):
+    return np.loadtxt('{0}/{1}'.format(DATA_DIR, fname))
+
+
+def data_exists(*fnames):
+    for fname in fnames:
+        if not exists(get_fpath(fname)):
+            return False
+    
+    return True
 
 
 def person_func(k, vectors):
@@ -39,10 +48,10 @@ def person_func(k, vectors):
 
 
 def get_original_data():
-    if not data_exists():
+    if not data_exists(VECTORS_FILE, MIDDLE_FILE):
         #get data from original photos
         original_photos_data = np.array([np.mean( \
-            (np.asarray(im.open('{0}/Images/Original/{1}.bmp'.format(DATA_DIR, n + 1)).resize(IMG_SHAPE), dtype=D_TYPE)) / 255.0, \
+            (np.asarray(im.open('{0}/Images/Original/{1}.bmp'.format(DATA_DIR, n + 1)), dtype=D_TYPE)) / 255.0, \
             axis=-1, dtype=D_TYPE).flatten() \
             for n in range(N)])
 
@@ -52,10 +61,10 @@ def get_original_data():
 
         #exclude middle image data
         clean_data = np.array([np.abs(fi - mid_image_data)
-                                for fi in original_photos_data], dtype=np.float32)
+                                for fi in original_photos_data], dtype=D_TYPE)
 
         #find matrix psi * psi_T
-        G_mtrx = clean_data.transpose().dot(clean_data)
+        G_mtrx = clean_data.dot(clean_data.transpose())
         #find its eign values and vectors
         values, vectors = np.linalg.eigh(G_mtrx)
         #sort them
@@ -76,21 +85,57 @@ def get_original_data():
         d = len(main_values)
         basis = np.asarray(list(map(lambda vi: vi / np.linalg.norm(vi), vectors[:d])))
 
-        new_vectors = vectors.dot(basis)
+        new_vectors = basis.dot(clean_data)
 
-        np.savetxt(get_fpath(BASIS_FILE), basis, delimiter=';')
-        np.savetxt(get_fpath(VECTORS_FILE), new_vectors, delimiter=';')
-        np.savetxt(get_fpath(MIDDLE_FILE), mid_image_data, delimiter=';')
+        #print_img(new_vectors[-1] + mid_image_data)
 
-        return (basis, mid_image_data)
+        np.savetxt('{0}/{1}'.format(DATA_DIR, VECTORS_FILE), new_vectors)
+        np.savetxt('{0}/{1}'.format(DATA_DIR, MIDDLE_FILE), mid_image_data)
 
-    def get_data(fname):
-        return np.loadtxt(get_fpath(fname), delimiter=';')
+        return (new_vectors, mid_image_data)
 
-    return (get_data(BASIS_FILE), get_data(VECTORS_FILE), get_data(MIDDLE_FILE))
+    return (get_fdata(VECTORS_FILE), get_fdata(MIDDLE_FILE))
 
 
-persons = {1: 'Oleg', 2: 'Dima', 3: 'Ivan', 4: 'Michel', 5: 'Alexandr', 6: 'Alina', 7: 'Olesya', 8: 'Vova'}
+def fit():
+    train_data = np.array([np.mean( \
+            (np.asarray(im.open('{0}/Images/Original/{1}.bmp'.format(DATA_DIR, n * 5 + 1)), dtype=D_TYPE)) / 255.0, \
+            axis=-1, dtype=D_TYPE).flatten() \
+            for n in range(N // 5)])
+
+    test_data, mid_image_data = get_original_data()
+
+    if not data_exists(WEIGHTS_FILE):
+        clean_train_data = np.array([np.abs(fi - mid_image_data)
+                        for fi in train_data], dtype=D_TYPE)
+
+        weights = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+        for k in range(N // 5):
+            tmp = clean_train_data[k]
+            weights[k] = weights[k] / np.linalg.norm(np.sqrt(tmp.dot(tmp)))
+        
+
+        face_index, step = 0, 0
+        for Li in test_data:
+            ro = []
+            for k in range(N // 5):
+                tmp = np.array(Li - person_func(k, test_data))
+                ro.append(np.linalg.norm(np.sqrt(tmp.dot(tmp))))
+
+            if face_index != np.argmin(ro):
+                weights[face_index] = weights[face_index] / 10.0
+
+            step = step + 1
+            if (step % 5 == 0):
+                face_index = face_index + 1
+
+        weights = np.array(weights)
+        np.savetxt('{0}/{1}'.format(DATA_DIR), weights)
+
+        return (weights, test_data)
+
+    return (get_fdata(WEIGHTS_FILE), test_data)
 
 
 def recognise(face_data):
@@ -100,19 +145,14 @@ def recognise(face_data):
             (np.asarray(img.resize(IMG_SHAPE), dtype=D_TYPE)) / 255.0, \
             axis=-1, dtype=D_TYPE).flatten())
 
-    basis, vectors, mid_image_data = get_original_data()
-
-    #exclude middle image data
-    clean_data = np.array([np.abs(fi - mid_image_data)
-                    for fi in image_data], dtype=np.float32)
-
     print('Recognition in progress...')
 
-    transformed_data = clean_data.transpose().dot(basis)
-    for Li in transformed_data:
-        ro = []
-        for k in range(N // 5):
-            tmp = np.array(Li - person_func(k, vectors))
-            ro.append(np.linalg.norm(np.sqrt(tmp.dot(tmp))))
+    wghts, vectors = fit()
 
-        print(persons[np.argmin(ro)])
+    ro = []
+    for k in range(N // 5):
+        tmp = np.array(image_data - person_func(k, vectors))
+        ro.append(np.linalg.norm(np.sqrt(tmp.dot(tmp))))
+
+    print(persons[np.argmin(ro)])
+    #print(persons[np.argmin(wghts.dot(ro).flatten())])
