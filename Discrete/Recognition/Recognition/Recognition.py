@@ -1,10 +1,14 @@
-import custom_utils as utls
+from custom_utils import PCA, DATA_DIR
 import cv2
 
 
-faceCascade = cv2.CascadeClassifier('{0}/Resources/haarcascade_frontalface_default.xml'.format(utls.DATA_DIR))
+faceCascade = cv2.CascadeClassifier('{0}/Resources/haarcascade_frontalface_default.xml'.format(DATA_DIR))
 
 video_capture = cv2.VideoCapture(0)
+
+pca_model = PCA()
+
+move_window = 30
 
 while True:
     # Capture frame-by-frame
@@ -16,11 +20,11 @@ while True:
         gray,
         scaleFactor=1.1,
         minNeighbors=1,
-        minSize=(100, 75)
+        minSize=(300, 225)
     )
 
     for (x, y, w, h) in faces:
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.rectangle(frame, (x, y-move_window), (x+w, y+h-move_window), (0, 255, 0), 2)
         break
 
     # Display the resulting frame
@@ -31,10 +35,10 @@ while True:
 
     if cv2.waitKey(1) == 13:
         for (x, y, w, h) in faces:
-            screenshot = frame[y+1:y+1+h, x+1:x+1+w].copy()
+            screenshot = frame[y-move_window+2:y-move_window-2+h, x+2:x-2+w].copy()
             print('Screenshot was captured')
             cv2.imshow('Screenshot', screenshot)
-            utls.recognise(screenshot)
+            pca_model.recognise(screenshot)
 
 video_capture.release()
 cv2.destroyAllWindows()
