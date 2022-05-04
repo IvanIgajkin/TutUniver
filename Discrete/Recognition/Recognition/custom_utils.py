@@ -3,7 +3,7 @@ from PIL import Image as im
 import collections as colls
 from os.path import exists
 import matplotlib.pyplot as plt
-
+from sklearn.decomposition import PCA as skPCA
 #Global parameters
 DATA_DIR = './Data'
 N = 40
@@ -12,11 +12,11 @@ D_TYPE = np.float32
 VECTORS_FILE = 'original_vectors.txt'
 MIDDLE_FILE = 'middle_image.txt'
 
-ACC = 1.00
-IMG_SHAPE = (400, 300)
+ACC = 0.98
+IMG_SHAPE = (64, 64)
 #Global parameters
 
-persons = {0: 'Oleg', 1: 'Dima', 2: 'Ivan', 3: 'Michel', 4: 'Alexandr', 5: 'Alina', 6: 'Olesya', 7: 'Vova'}
+persons = {0: 'Oleg', 1: 'Dima', 2: 'Ivan', 3: 'Michel', 4: 'Alexandr', 5: 'Vova', 6: 'Alina', 7: 'Olesya'}
 
 
 def print_img(data):
@@ -47,12 +47,21 @@ def person_func(k, vectors):
 
 class PCA:
     def __init__(self):
-        if not data_exists(VECTORS_FILE, MIDDLE_FILE):
             #get data from original photos
             original_photos_data = np.array([np.mean( \
-                (np.asarray(im.open('{0}/Images/Original/{1}.bmp'.format(DATA_DIR, n + 1)), dtype=D_TYPE)) / 255.0, \
+                (np.asarray(im.open('{0}/Images/Original/{1}.bmp'.format(DATA_DIR, n + 1)).resize(IMG_SHAPE) , dtype=D_TYPE)) / 255.0, \
                 axis=-1, dtype=D_TYPE).flatten() \
                 for n in range(N)])
+
+            k_comp = 40
+            p = skPCA(k_comp)
+            p.fit(original_photos_data)
+
+            self.mid = p.mean_
+            self.vectors = p.components_.T
+            self.basis = (original_photos_data - self.mid) @ self.vectors
+
+            return
 
             #get middle image data
             mid_image_data = np.array([np.mean(fi, axis=-1, dtype=D_TYPE) \
@@ -63,17 +72,15 @@ class PCA:
                                     for fi in original_photos_data], dtype=D_TYPE)
 
             #find matrix psi * psi_T
-            G_mtrx = clean_data.dot(clean_data.transpose())
+            cov_mtrx = np.cov(clean_data)
             #find its eign values and vectors
-            values, vectors = np.linalg.eigh(G_mtrx)
+            values, vectors = np.linalg.eigh(cov_mtrx)
             #sort them
-            tmp_dict = colls.OrderedDict(sorted(dict(zip(values, vectors)).items(), reverse=True))
-            values, vectors = np.array(list(tmp_dict.keys())), \
-                              np.array(list(tmp_dict.values()))
+            ind = np.abs(values).argsort()[::-1]
 
             L_origin = np.sum(np.abs(values))
             main_values = []
-            for v in values:
+            for v in values[ind]:
               if sum(np.abs(main_values)) >= ACC * L_origin:
                 break
 
@@ -82,37 +89,37 @@ class PCA:
             main_values = np.array(main_values)
 
             d = len(main_values)
-            basis = np.asarray(list(map(lambda vi: vi / np.linalg.norm(vi), vectors[:d])))
+            sorted_vectors = vectors[ind]
+            basis = np.asarray(list(map(lambda vi: vi / np.linalg.norm(vi), sorted_vectors[:d])))
 
             new_vectors = basis.dot(clean_data)
 
-            #print_img(new_vectors[-1] + mid_image_data)
+            print_img(new_vectors[0] + mid_image_data)
 
-            np.savetxt('{0}/{1}'.format(DATA_DIR, VECTORS_FILE), new_vectors)
-            np.savetxt('{0}/{1}'.format(DATA_DIR, MIDDLE_FILE), mid_image_data)
+            self.persons = []
+            for k in range(N // 5):
+                self.persons.append(person_func(k, new_vectors))
 
-            self.vectors, self.mid = new_vectors, mid_image_data
-        else:
-            self.vectors, self.mid = get_fdata(VECTORS_FILE), get_fdata(MIDDLE_FILE)
+            self.basis, self.mid, self.vectors = basis, mid_image_data, new_vectors
 
 
     def recognise(self, face_data):
         img = im.fromarray(face_data)
 
         image_data = np.array(np.mean( \
-                (np.asarray(img.resize(IMG_SHAPE), dtype=D_TYPE)) / 255.0, \
+                np.asarray(img.resize(IMG_SHAPE)) / 255.0, \
                 axis=-1, dtype=D_TYPE).flatten())
 
-        print('Recognition in progress...')
+        diff = self.basis - (image_data - self.mid) @ self.vectors
+        ro = np.linalg.norm(diff, axis=1)
+
+        print(persons[np.argmin(ro) // 5])
+
+        return
 
         clean_image_data = np.abs(image_data - self.mid)
 
-        print_img(clean_image_data)
-        print_img(person_func(2, self.vectors))
-
         ro = []
         for k in range(N // 5):
-            tmp = np.array(clean_image_data - person_func(k, self.vectors))
+            tmp = np.array(clean_image_data - self.persons[k])
             ro.append(np.linalg.norm(tmp))
-
-        print(persons[np.argmin(ro)])
