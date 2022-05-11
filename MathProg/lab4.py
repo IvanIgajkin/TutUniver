@@ -1,23 +1,11 @@
 import numpy as np
 import numdifftools as nd
-from scipy.optimize import fmin
 
 #задаём функцию
 f = lambda x_vec: 2 * x_vec[0]**2 + x_vec[0] * x_vec[1] + x_vec[1]**2
 #f = lambda x_vec: 4 * (x_vec[0] - 4)**2 + (x_vec[1] - 3)**2
 
 ZERO = 1e-4 #"условный ноль" для использования при сравнении вещественных чисел  с нулем
-
-#проверка на положительную определенность H(xk)
-def is_positive_def_mtrx(matrix):
-    return np.all(np.linalg.eigvals(matrix) > 0)
-
-#метод для нахождения tk
-def find_tk(xk, dk):
-    fi = lambda t: f(xk + t * dk)
-    t0 = 0.0
-
-    return fmin(fi, t0, disp=False)[0]
 
 x0 = (0.5, 1) #начальное приближение
 eps1, eps2 = 0.1, 0.15 #задаваемая точность

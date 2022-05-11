@@ -8,10 +8,6 @@ f = lambda x_vec: 2 * x_vec[0]**2 + x_vec[0] * x_vec[1] + x_vec[1]**2
 
 ZERO = 1e-4 #"условный ноль" для использования при сравнении вещественных чисел  с нулем
 
-#проверка на положительную определенность H(xk)
-def is_positive_def_mtrx(matrix):
-    return np.all(np.linalg.eigvals(matrix) > 0)
-
 #метод для нахождения tk
 def find_tk(xk, dk):
     fi = lambda t: f(xk + t * dk)
