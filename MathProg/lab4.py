@@ -2,8 +2,8 @@ import numpy as np
 import numdifftools as nd
 
 #задаём функцию
-f = lambda x_vec: 2 * x_vec[0]**2 + x_vec[0] * x_vec[1] + x_vec[1]**2
-#f = lambda x_vec: 4 * (x_vec[0] - 4)**2 + (x_vec[1] - 3)**2
+#f = lambda x_vec: 2 * x_vec[0]**2 + x_vec[0] * x_vec[1] + x_vec[1]**2
+f = lambda x_vec: 4 * (x_vec[0] - 4)**2 + (x_vec[1] - 3)**2
 
 ZERO = 1e-4 #"условный ноль" для использования при сравнении вещественных чисел  с нулем
 
@@ -20,7 +20,7 @@ mk = m0
 # в python нет цикла вида do ... while, поэтому используем обычный while
 # и, так как новая точка не известна до начала работы цикла, проверку на сходимость нельзя поставить, как главное условие выхода из цикла
 while k < M:
-    print('Iteration: {0}\tCurrent x = (x1={1}, x2={2})'.format(k + 1, xk[0], xk[1]))
+    print('Iteration: {0}\tCurrent x = (x1={1}, x2={2})\tmu_k={3}'.format(k + 1, xk[0], xk[1], mk))
 
     grad_value = nd.Gradient(f)(xk) #значение градиента для xk
     if np.linalg.norm(grad_value) <= eps1: #проверка на норму градиента функции для xk
