@@ -46,7 +46,6 @@ f = lambda x: (x[0] + 1)**3 / 3.0 + x[1]
 g = [lambda x: 1 - x[0], lambda x: -x[1]]
 
 def p (x, r):
-    global wasSpecial
     _sum = 0
     
     for gi in g:
