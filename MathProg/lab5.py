@@ -31,8 +31,11 @@ def min(f, x0):
         k = k + 1
     #цикл начинается сначала
 
+    if np.any(xk < 0):
+        return x0
+
     # заменить все значения, примерно равные нулю на 0.0
-    return np.array(list(map(lambda xi: 0.0 if xi < ZERO else xi, xk)))
+    return np.array(list(map(lambda xi: 0.0 if abs(xi) < ZERO else xi, xk)))
 
 #задаём функцию
 #f = lambda x: x[0]**2 - 4 * x[0]
@@ -43,11 +46,10 @@ f = lambda x: (x[0] + 1)**3 / 3.0 + x[1]
 g = [lambda x: 1 - x[0], lambda x: -x[1]]
 
 def p (x, r):
+    global wasSpecial
     _sum = 0
     
     for gi in g:
-        if gi(x):
-            re
         _sum = _sum + 1 / gi(x)
         #_sum = _sum + math.log(-gi(x))
     
@@ -73,6 +75,7 @@ while k < M:
     print('Iteration: {0}\tCurrent x = ({1})'.format(k + 1, xk))
     
     F = lambda x: f(x) + p(x, rk)
+
     xk = min(F, xk)
 
     if abs(p(xk, rk)) < eps: #проверка на сходимость
@@ -83,7 +86,7 @@ while k < M:
   #цикл начинается сначала
 
 # заменить все значения, примерно равные нулю на 0.0
-xk = list(map(lambda xi: 0.0 if xi < ZERO else xi, xk))
+xk = list(map(lambda xi: 0.0 if abs(xi) < ZERO else xi, xk))
 
 print()
 print('Found local minimum on iterarion {0}'.format(k + 1))
