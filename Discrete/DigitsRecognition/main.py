@@ -1,28 +1,16 @@
-import tkinter as tk
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+from app import App
+from ann import ANN
 
-WIDTH, HEIGHT = 600, 800
+def train_model_ANN():
+    pass
 
+if __name__ == '__main__':
+    train_model_ANN()
 
-def draw(event):
-    inwindow.create_oval(
-        event.x - 16,
-        event.y - 16,
-        event.x + 16,
-        event.y + 16,
-        fill='black',
-    )
-
-
-root = tk.Tk()
-
-inwindow = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg='white')
-# for x in range(WIDTH // 100):
-#     for y in range(HEIGHT // 100):
-#         inwindow.create_line(x, y, x, y + HEIGHT, fill='grey')
-
-inwindow.bind('<B1-Motion>', draw)
-
-inwindow.pack()
-
-root.mainloop()
+    a = App((28, 28), ANN)
+    #a.load_model_ANN('models\model_tf.h5')
+    a.load_model_ANN('model1.npy')
+    a.get_UI(title='Распознавание цифр', brush_size=16)

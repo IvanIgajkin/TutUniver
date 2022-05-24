@@ -2,16 +2,17 @@ import tkinter as tk
 from PIL import ImageGrab
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import numpy as np
+from ann import ANN
 
 class App(object):
-    def __init__(self):
-        self.image_size = (36, 36)
+    def __init__(self, image_size=(16, 16), model_ANN=ANN):
+        self.image_size = image_size
+        self.ann = model_ANN(self.image_size)
 
     def load_model_ANN(self, path=None):
-        pass
+        self.ann.load(path)
 
-    def get_UP(self, title='title', brush_size=10, brush_color='black'):
+    def get_UI(self, title='title', brush_size=10, brush_color='black'):
         self.root = tk.Tk()
         self.root.title(title)
         self.root.geometry('800x600')
@@ -69,20 +70,13 @@ class App(object):
             self.canv_paint.winfo_rooty() + self.canv_paint.winfo_height() - 2,
         ))
 
-        tmp = np.array(new_image.resize(self.image_size).convert('L')) + 1
-
-        np.savetxt('weigths.txt', np.array(tmp, dtype=bool), fmt='%d')
-
         self.image.set_data(new_image.resize(self.image_size))
         self.canv_image.draw()
 
-        self.predict_label.config(text='TODO: predict')
+        self.predict_label.config(text=f'{self.ann.predict(new_image)}')
 
     def _clear_all(self):
         self.canv_paint.delete('all')
         self.predict_label.config(text=self.text_predict_label)
         self.image.set_data([[0]])
         self.canv_image.draw()
-
-a = App()
-a.get_UP()
