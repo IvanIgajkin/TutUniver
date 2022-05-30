@@ -9,7 +9,7 @@ from scipy.optimize import fmin
 f = lambda x: (x[0] - 4)**2 + (x[1] - 5)**2
 
 #g = [lambda x: x[0] - 1]
-g = [lambda x: x[0] + x[1] - 1]
+g = [lambda x: x[0] + x[1]**2 - 4]
 
 def calc_A(x):
     return np.asarray([nd.Gradient(gi)(x) for gi in g])
@@ -27,9 +27,9 @@ def find_tk(xk, dk):
 ZERO = 1e-0 #"условный ноль" для использования при сравнении вещественных чисел  с нулем
 
 #начальное приближение
-x0 = np.array([3., 2.5])
+x0 = np.array([0., 2.])
 #x0 = np.array([8.0])
-eps = 1.e-2 #задаваемая точность
+eps = 1.e-4 #задаваемая точность
 M = 10 #предельное число итераций
 
 k = 0
