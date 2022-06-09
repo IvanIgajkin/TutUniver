@@ -39,8 +39,8 @@ def min(f, x0):
 
 #задаём функцию
 #f = lambda x: x[0]**2 - 4 * x[0]
-#f = lambda x_vec: x
-f = lambda x: (x[0] + 1)**3 / 3.0 + x[1]
+f = lambda x: x[0]
+#f = lambda x: (x[0] + 1)**3 / 3.0 + x[1]
 
 #g = [lambda x: x[0] - 1]
 g = [lambda x: 1 - x[0], lambda x: -x[1]]
