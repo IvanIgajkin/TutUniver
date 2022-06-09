@@ -1,4 +1,5 @@
 import numpy as np
+import numdifftools as nd
 from PIL.Image import fromarray
 
 def image_to_array(img, size=None, dtype=np.float32, flatten=False):
@@ -31,18 +32,47 @@ def image_to_crop_array(img, size=None, dtype=np.float32, flatten=False):
 
     return arr
 
+
 class ANN(object):
-    def __init__(self, image_size, threshold=0.2):
+    def __init__(self, image_size, threshold=0.25):
         self.image_size = image_size
         self.threshold = threshold
 
     def load(self, path):
         with open(path, 'rb') as f:
             self.w = np.load(f)
+        
 
     def predict(self, image):
         X = image_to_crop_array(image, size=self.image_size, dtype=bool, flatten=True)
         s = np.logical_xor(X, self.w).sum()
         a = s / (self.image_size[0] * self.image_size[1])
         Y = a <= self.threshold
-        return Y, round((1 - a) * 100, 2)
+        percts = round((1 - a) * 100, 2)
+
+        
+        # for i in range(10):
+        #     with open(f'.\model{i}.npy', 'rb') as f:
+        #         w = np.load(f)
+        #         print(np.reshape(w, self.image_size))
+        #         print()
+        
+        self.rework(Y, percts, self.w)
+        return percts / 100
+
+    
+    def E(self, x):
+        return self.w.sum() * 1 / (self.w @ x)
+        
+
+    def rework(self, Y, percts, w):
+        return
+        for i in range(len(w)):
+            w[i] = w[i] - 1.e-2 * nd.Gradient(self.E)(w)
+
+        print(np.reshape(w, self.image_size))
+
+        s = np.logical_xor(X, w).sum()
+        a = s / (self.image_size[0] * self.image_size[1])
+        Y = a <= self.threshold
+        Y, round((1 - a) * 100, 2)

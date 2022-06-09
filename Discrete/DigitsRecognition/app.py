@@ -3,11 +3,36 @@ from PIL import ImageGrab
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from ann import ANN
+import digit_0
+import numpy as np
 
 class App(object):
     def __init__(self, image_size=(16, 16), model_ANN=ANN):
         self.image_size = image_size
         self.ann = model_ANN(self.image_size)
+        self.ann0 = digit_0.ANN_tf(image_size)
+        self.ann0.load('model_2_1.h5')
+        self.ann3 = model_ANN(self.image_size)
+        self.ann3.load('model3.npy')
+        self.ann2 = model_ANN(self.image_size)
+        self.ann2.load('model2.npy')
+        self.ann4 = model_ANN(self.image_size)
+        self.ann4.load('model4.npy')
+        self.ann5 = model_ANN(self.image_size)
+        self.ann5.load('model5.npy')
+        self.ann7 = model_ANN(self.image_size)
+        self.ann7.load('model7.npy')
+        self.ann8 = model_ANN(self.image_size)
+        self.ann8.load('model8.npy')
+        self.ann6 = model_ANN(self.image_size)
+        self.ann6.load('model6.npy')
+        self.ann9 = model_ANN(self.image_size)
+        self.ann9.load('model9.npy')
+
+        self.digits = [
+            [self.ann0, self.ann, self.ann2, self.ann3, self.ann4, self.ann5, self.ann6, self.ann7, self.ann8, self.ann9],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        ]
 
     def load_model_ANN(self, path=None):
         self.ann.load(path)
@@ -73,7 +98,8 @@ class App(object):
         self.image.set_data(new_image.resize(self.image_size))
         self.canv_image.draw()
 
-        self.predict_label.config(text=f'{self.ann.predict(new_image)}')
+        a = [x.predict(new_image) for x in self.digits[0] ]
+        self.predict_label.config(text=f'{self.digits[1][np.argmax(a)]}')
 
     def _clear_all(self):
         self.canv_paint.delete('all')
